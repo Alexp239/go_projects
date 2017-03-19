@@ -8,7 +8,7 @@ func Pipe(funcs ...job) {
 	var wg sync.WaitGroup
 	wg.Add(len(funcs))
 	var channels []chan interface{}
-	for i := 0; i < len(funcs)+2; i++ {
+	for i := 0; i < len(funcs)+1; i++ {
 		channels = append(channels, make(chan interface{}))
 	}
 	for i, fun := range funcs {
