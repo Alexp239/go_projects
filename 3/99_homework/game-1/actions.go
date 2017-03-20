@@ -50,11 +50,11 @@ func (player *Player) GoRoom(par ...string) string {
 			if path.locker != nil && path.locker.locked == true {
 				return path.locker.name + path.locker.closeDiscr
 			}
-			postions.mu.Lock()
-			defer postions.mu.Unlock()
-			delete(postions.positions[player.position.name], player.name)
+			positions.mu.Lock()
+			defer positions.mu.Unlock()
+			delete(positions.positions[player.position.name], player.name)
 			player.position = path.room
-			postions.positions[player.position.name][player.name] = player
+			positions.positions[player.position.name][player.name] = player
 
 			res := path.room.goDiscr
 			res += player.AddNeighbRooms()
@@ -124,11 +124,11 @@ func (player *Player) Apply(par ...string) string {
 }
 
 func (player *Player) SayPlayer(par ...string) {
-	postions.mu.Lock()
-	defer postions.mu.Unlock()
+	positions.mu.Lock()
+	defer positions.mu.Unlock()
 
 	r := player.position
-	reciever, ok := postions.positions[r.name][par[0]]
+	reciever, ok := positions.positions[r.name][par[0]]
 	if !ok {
 		player.HandleOutput("тут нет такого игрока")
 		return
@@ -146,8 +146,8 @@ func (player *Player) SayPlayer(par ...string) {
 }
 
 func (player *Player) Say(par ...string) {
-	postions.mu.Lock()
-	defer postions.mu.Unlock()
+	positions.mu.Lock()
+	defer positions.mu.Unlock()
 
 	r := player.position
 
@@ -161,7 +161,7 @@ func (player *Player) Say(par ...string) {
 		}
 	}
 
-	for _, pl := range postions.positions[r.name] {
+	for _, pl := range positions.positions[r.name] {
 		pl.HandleOutput(res)
 	}
 	return

@@ -105,14 +105,14 @@ func (player *Player) AddNeighbRooms() string {
 }
 
 func (player *Player) AddPlayers() string {
-	postions.mu.Lock()
-	defer postions.mu.Unlock()
+	positions.mu.Lock()
+	defer positions.mu.Unlock()
 	r := player.position
 	res := ""
-	if len(postions.positions[r.name]) > 1 {
+	if len(positions.positions[r.name]) > 1 {
 		res += ". Кроме вас тут ещё"
 		j := false
-		for _, pl := range postions.positions[r.name] {
+		for _, pl := range positions.positions[r.name] {
 			if pl != player {
 				if j {
 					res += ","
@@ -194,7 +194,7 @@ func (player *Player) initRooms() {
 	room.AddFurniture(&roomChair)
 
 	player.position = &kitchen
-	postions.mu.Lock()
-	postions.positions["кухня"][player.name] = player
-	postions.mu.Unlock()
+	positions.mu.Lock()
+	positions.positions["кухня"][player.name] = player
+	positions.mu.Unlock()
 }

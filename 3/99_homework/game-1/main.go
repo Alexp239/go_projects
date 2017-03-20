@@ -1,7 +1,7 @@
 package main
 
 var players []*Player
-var postions PositionsStruct
+var positions PositionsStruct
 
 func NewPlayer(name string) *Player {
 	player := Player{
@@ -18,11 +18,11 @@ func addPlayer(player *Player) {
 }
 
 func initGuestsRooms() {
-	postions.positions = PositionsMap{}
-	postions.positions["кухня"] = make(map[string]*Player)
-	postions.positions["коридор"] = make(map[string]*Player)
-	postions.positions["комната"] = make(map[string]*Player)
-	postions.positions["улица"] = make(map[string]*Player)
+	positions.positions = PositionsMap{}
+	positions.positions["кухня"] = make(map[string]*Player)
+	positions.positions["коридор"] = make(map[string]*Player)
+	positions.positions["комната"] = make(map[string]*Player)
+	positions.positions["улица"] = make(map[string]*Player)
 }
 
 func initGame() {
