@@ -20,16 +20,11 @@ type FurnitureSlice []*Furniture
 // PathSlice - набор путей
 type PathSlice []*Path
 
+type PlayersMap map[string]*Player
+
 // Item - предмет
 type Item struct {
 	name string
-}
-
-type PositionsMap map[string]map[string]*Player
-
-type PositionsStruct struct {
-	positions PositionsMap
-	mu        sync.Mutex
 }
 
 // Furniture - мебель
@@ -83,6 +78,8 @@ type Room struct {
 	freeDiscr string
 	furniture FurnitureSlice
 	paths     PathSlice
+	mu        sync.Mutex
+	players   PlayersMap
 }
 
 // AddPath - добавление прохода из одной комнаты в другую

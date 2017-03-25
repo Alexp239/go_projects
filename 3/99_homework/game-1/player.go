@@ -66,7 +66,7 @@ func (player *Player) checkTasks() string {
 }
 
 // ShowLockers - информация о "замках"
-func (player *Player) ShowLockers(r *Room) (string, bool) {
+func (player *Player) ShowLockers() (string, bool) {
 	res := ""
 	j := false
 	for _, path := range player.position.paths {
@@ -105,14 +105,12 @@ func (player *Player) AddNeighbRooms() string {
 }
 
 func (player *Player) AddPlayers() string {
-	positions.mu.Lock()
-	defer positions.mu.Unlock()
 	r := player.position
 	res := ""
-	if len(positions.positions[r.name]) > 1 {
+	if len(r.players) > 1 {
 		res += ". Кроме вас тут ещё"
 		j := false
-		for _, pl := range positions.positions[r.name] {
+		for _, pl := range r.players {
 			if pl != player {
 				if j {
 					res += ","
@@ -136,65 +134,4 @@ func (player *Player) initTasks() {
 	player.tasks = append(player.tasks, Task{"идти в универ", func() bool {
 		return false
 	}})
-}
-
-func (player *Player) initRooms() {
-	roomTable := Furniture{
-		name:        "стол",
-		description: "на столе: ",
-	}
-
-	keys := Item{"ключи"}
-	roomTable.AddItem(&keys)
-	conspects := Item{"конспекты"}
-	roomTable.AddItem(&conspects)
-
-	roomChair := Furniture{
-		name:        "стул",
-		description: "на стуле - ",
-	}
-	roomChair.AddItem(&Item{"рюкзак"})
-
-	kitchen := Room{
-		name:      "кухня",
-		lookDiscr: "ты находишься на кухне, на столе чай",
-		goDiscr:   "кухня, ничего интересного.",
-	}
-	corridor := Room{
-		name:    "коридор",
-		goDiscr: "ничего интересного.",
-	}
-	room := Room{
-		name:      "комната",
-		goDiscr:   "ты в своей комнате.",
-		freeDiscr: "пустая комната",
-	}
-	street := Room{
-		name:    "улица",
-		goDiscr: "на улице весна.",
-	}
-
-	kitchen.AddPath(&corridor)
-	corridor.AddPath(&room)
-
-	door := Locker{
-		Furniture: Furniture{
-			name:        "дверь",
-			description: "",
-		},
-		locked:     true,
-		unlockItem: &keys,
-		openDiscr:  " открыта",
-		closeDiscr: " закрыта",
-	}
-
-	corridor.AddPathLocked(&street, &door)
-
-	room.AddFurniture(&roomTable)
-	room.AddFurniture(&roomChair)
-
-	player.position = &kitchen
-	positions.mu.Lock()
-	positions.positions["кухня"][player.name] = player
-	positions.mu.Unlock()
 }

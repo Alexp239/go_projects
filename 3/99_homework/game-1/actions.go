@@ -2,13 +2,16 @@ package main
 
 // Look - осмотреться
 func (player *Player) Look(ar ...string) string {
-	res := player.position.lookDiscr
+	r := player.position
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	res := r.lookDiscr
 
-	showRes, fl := player.ShowLockers(player.position)
+	showRes, fl := player.ShowLockers()
 	res += showRes
 
-	if len(player.position.furniture) > 0 {
-		for _, furn := range player.position.furniture {
+	if len(r.furniture) > 0 {
+		for _, furn := range r.furniture {
 			if len(furn.items) > 0 {
 				if fl {
 					res += ", "
@@ -50,11 +53,14 @@ func (player *Player) GoRoom(par ...string) string {
 			if path.locker != nil && path.locker.locked == true {
 				return path.locker.name + path.locker.closeDiscr
 			}
-			positions.mu.Lock()
-			defer positions.mu.Unlock()
-			delete(positions.positions[player.position.name], player.name)
+			r := player.position
+			r.mu.Lock()
+			defer r.mu.Unlock()
+			path.room.mu.Lock()
+			defer path.room.mu.Unlock()
+			delete(r.players, player.name)
 			player.position = path.room
-			positions.positions[player.position.name][player.name] = player
+			player.position.players[player.name] = player
 
 			res := path.room.goDiscr
 			res += player.AddNeighbRooms()
@@ -66,11 +72,14 @@ func (player *Player) GoRoom(par ...string) string {
 
 // Take - взять
 func (player *Player) Take(par ...string) string {
+	r := player.position
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	if player.inventory == nil {
 		return "некуда класть"
 	}
 	takeItem := par[0]
-	for _, furn := range player.position.furniture {
+	for _, furn := range r.furniture {
 		for i, item := range furn.items {
 			if item.name == takeItem {
 				furn.TakeItem(i, player)
@@ -83,9 +92,12 @@ func (player *Player) Take(par ...string) string {
 
 // Dress - одеть
 func (player *Player) Dress(par ...string) string {
+	r := player.position
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	takeItem := par[0]
 	if takeItem == "рюкзак" {
-		for _, furn := range player.position.furniture {
+		for _, furn := range r.furniture {
 			for i, item := range furn.items {
 				if item.name == takeItem {
 					furn.DressBag(i, player)
@@ -101,6 +113,9 @@ func (player *Player) Dress(par ...string) string {
 
 // Apply - применить
 func (player *Player) Apply(par ...string) string {
+	r := player.position
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	applyItem := par[0]
 	applyFurn := par[1]
 
@@ -124,11 +139,10 @@ func (player *Player) Apply(par ...string) string {
 }
 
 func (player *Player) SayPlayer(par ...string) {
-	positions.mu.Lock()
-	defer positions.mu.Unlock()
-
 	r := player.position
-	reciever, ok := positions.positions[r.name][par[0]]
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	reciever, ok := r.players[par[0]]
 	if !ok {
 		player.HandleOutput("тут нет такого игрока")
 		return
@@ -146,10 +160,10 @@ func (player *Player) SayPlayer(par ...string) {
 }
 
 func (player *Player) Say(par ...string) {
-	positions.mu.Lock()
-	defer positions.mu.Unlock()
-
 	r := player.position
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	res := ""
 	if len(par) == 0 {
@@ -161,7 +175,7 @@ func (player *Player) Say(par ...string) {
 		}
 	}
 
-	for _, pl := range positions.positions[r.name] {
+	for _, pl := range r.players {
 		pl.HandleOutput(res)
 	}
 	return
