@@ -51,8 +51,12 @@ func (player *Player) GoRoom(par ...string) string {
 	if len(par) == 0 {
 		return "Команда идти [комната]"
 	}
+	roomName := par[0]
+	if roomName == "домой" {
+		roomName = "коридор"
+	}
 	for _, path := range player.position.paths {
-		if path.room.name == par[0] {
+		if path.room.name == roomName {
 			if path.locker != nil && path.locker.locked == true {
 				return path.locker.name + path.locker.closeDiscr
 			}

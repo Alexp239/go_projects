@@ -133,8 +133,15 @@ func getHiCommand(player *Player) {
 	player.HandleOutput("Вы в игре!")
 }
 
-var buttons = []tgbotapi.KeyboardButton{
+var adminButtons = []tgbotapi.KeyboardButton{
+	tgbotapi.KeyboardButton{Text: "/help"},
+	tgbotapi.KeyboardButton{Text: "осмотреться"},
 	tgbotapi.KeyboardButton{Text: "Сброс игры"},
+}
+
+var defaultButtons = []tgbotapi.KeyboardButton{
+	tgbotapi.KeyboardButton{Text: "/help"},
+	tgbotapi.KeyboardButton{Text: "осмотреться"},
 }
 
 // При старте приложения, оно скажет телеграму ходить с обновлениями по этому URL
@@ -177,6 +184,9 @@ func main() {
 
 	// получаем все обновления из канала updates
 	for update := range updates {
+		if update.Message == nil {
+			continue
+		}
 		log.Println("received text: ", update.Message.Text)
 		name := update.Message.From.UserName
 		id := update.Message.From.ID
@@ -193,7 +203,9 @@ func main() {
 				for msg := range output {
 					message = tgbotapi.NewMessage(player.chatID, msg)
 					if admins[id] {
-						message.ReplyMarkup = tgbotapi.NewReplyKeyboard(buttons)
+						message.ReplyMarkup = tgbotapi.NewReplyKeyboard(adminButtons)
+					} else {
+						message.ReplyMarkup = tgbotapi.NewReplyKeyboard(defaultButtons)
 					}
 					bot.Send(message)
 				}
@@ -205,22 +217,25 @@ func main() {
 
 		player.lastMessageTime = time.Now()
 
-		switch update.Message.Text {
-		case "/start":
-			getHiCommand(player)
-			fallthrough
-		case "/help":
-			getCommandsInfo(player)
-		case "Сброс игры":
-			for _, pl := range players {
-				pl.DeletePlayer()
+		go func(update tgbotapi.Update) {
+			switch update.Message.Text {
+			case "/start":
+				getHiCommand(player)
+				fallthrough
+			case "/help":
+				getCommandsInfo(player)
+			case "Сброс игры":
+				if admins[id] {
+					for _, pl := range players {
+						pl.DeletePlayer()
+					}
+					initGame()
+				} else {
+					getCommandsInfo(player)
+				}
+			default:
+				player.HandleInput(update.Message.Text)
 			}
-			initGame()
-		default:
-			player.HandleInput(update.Message.Text)
-		}
-
-		// В ответном сообщении просим показать клавиатуру
-
+		}(update)
 	}
 }
