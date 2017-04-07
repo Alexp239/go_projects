@@ -19,113 +19,6 @@ var admins map[int]bool
 
 var db *sql.DB
 
-func NewPlayer(playerID int, name string, chatID int64) *Player {
-	player := Player{
-		id:       playerID,
-		name:     name,
-		messages: make(chan string),
-		chatID:   chatID,
-	}
-	players = append(players, &player)
-	return &player
-}
-
-func addPlayer(player *Player) {
-	player.initTasks()
-	player.position = startPosition
-	startPosition.players[player.id] = player
-}
-
-func initRooms() {
-	roomTable := Furniture{
-		name:        "стол",
-		description: "на столе: ",
-	}
-
-	keys := Item{
-		name:         "ключи",
-		defaultPlace: &roomTable,
-	}
-	roomTable.AddItem(&keys)
-	conspects := Item{
-		name:         "конспекты",
-		defaultPlace: &roomTable,
-	}
-	roomTable.AddItem(&conspects)
-
-	roomChair := Furniture{
-		name:        "стул",
-		description: "на стуле - ",
-	}
-	roomChair.AddItem(&Item{
-		name:         "рюкзак",
-		defaultPlace: &roomChair,
-	})
-
-	kitchen := Room{
-		name:      "кухня",
-		lookDiscr: "ты находишься на кухне, на столе чай",
-		goDiscr:   "кухня, ничего интересного.",
-		players:   PlayersMap{},
-	}
-	corridor := Room{
-		name:    "коридор",
-		goDiscr: "ничего интересного.",
-		players: PlayersMap{},
-	}
-	room := Room{
-		name:      "комната",
-		goDiscr:   "ты в своей комнате.",
-		freeDiscr: "пустая комната",
-		players:   PlayersMap{},
-	}
-	street := Room{
-		name:    "улица",
-		goDiscr: "на улице весна.",
-		players: PlayersMap{},
-	}
-
-	kitchen.AddPath(&corridor)
-	corridor.AddPath(&room)
-
-	door := Locker{
-		Furniture: Furniture{
-			name:        "дверь",
-			description: "",
-		},
-		locked:     true,
-		unlockItem: &keys,
-		openDiscr:  " открыта",
-		closeDiscr: " закрыта",
-	}
-
-	corridor.AddPathLocked(&street, &door)
-
-	room.AddFurniture(&roomTable)
-	room.AddFurniture(&roomChair)
-
-	startPosition = &kitchen
-}
-
-func initGame() {
-	initRooms()
-	actions = []string{"/start", "/help", "осмотреться", "идти [комната]",
-		"взять [предмет]", "одеть [предмет]", "применить [предмет] [замок]",
-		"сказать_игроку [игрок] [сообщение]", "сказать [сообщение]"}
-	players = []*Player{}
-	admins = map[int]bool{47394442: true}
-}
-
-func findPlayer(name string) (player *Player, ok bool) {
-	for _, player = range players {
-		if player.name == name {
-			ok = true
-			return
-		}
-	}
-	return
-}
-
 func getCommandsInfo(player *Player) {
 	s := "Возможные команды:\n"
 	for _, act := range actions {
@@ -155,11 +48,6 @@ func FatalOnErr(err error) {
 	}
 }
 
-type LogJSON struct {
-	Player  string `json:"player"`
-	Message string `json:"message"`
-}
-
 // При старте приложения, оно скажет телеграму ходить с обновлениями по этому URL
 const WebhookURL = "https://alexp-go-game.herokuapp.com/bot"
 
@@ -186,9 +74,9 @@ func main() {
 	);`)
 	FatalOnErr(err)
 	rows.Close()
-	rows, err = db.Query("DELETE FROM commands")
-	FatalOnErr(err)
-	rows.Close()
+
+	// Отдаем инфу по БД
+	go sessionFunc("https://alexp-go-game.herokuapp.com:" + port)
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
@@ -201,6 +89,7 @@ func main() {
 	updates := bot.ListenForWebhook("/bot")
 	go http.ListenAndServe(":"+port, nil)
 
+	// Удаление игрока, при его бездействии
 	go func() {
 		for {
 			time.Sleep(time.Minute)
@@ -230,22 +119,18 @@ func main() {
 		if !ok {
 			player = NewPlayer(id, name, update.Message.Chat.ID)
 
+			// Обработка вывода
 			go func(player *Player, id int) {
 				var message tgbotapi.MessageConfig
 				output := player.GetOutput()
 				for msg := range output {
-					log, err := json.Marshal(&LogJSON{Player: player.name, Message: msg})
+					logMes, err := json.Marshal(&LogJSON{Player: player.name, Message: msg})
 					FatalOnErr(err)
 
 					var lastInsertID int
 					err = db.QueryRow(`INSERT INTO commands ("from", "command", "result", "time") VALUES ($1,$2,$3,$4) RETURNING id;`,
-						player.name, player.curCommand, string(log), time.Now().Unix()).Scan(&lastInsertID)
-					/*
-						rows, err = db.Query(
-							`INSERT INTO commands ("from", "command", "result", "time") VALUES ($1, $2, $3, $4)`,
-							player.name, player.curCommand, string(log), time.Now().Unix())*/
+						player.name, player.curCommand, string(logMes), time.Now().Unix()).Scan(&lastInsertID)
 					FatalOnErr(err)
-					rows.Close()
 
 					message = tgbotapi.NewMessage(player.chatID, msg)
 					if admins[id] {
@@ -263,6 +148,7 @@ func main() {
 
 		player.lastMessageTime = time.Now()
 
+		// Обработка ввода
 		go func(update tgbotapi.Update) {
 			player.curCommand = update.Message.Text
 			switch update.Message.Text {
