@@ -186,6 +186,9 @@ func main() {
 	);`)
 	FatalOnErr(err)
 	rows.Close()
+	rows, err = db.Query("DELETE FROM commands")
+	FatalOnErr(err)
+	rows.Close()
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
@@ -233,9 +236,14 @@ func main() {
 				for msg := range output {
 					log, err := json.Marshal(&LogJSON{Player: player.name, Message: msg})
 					FatalOnErr(err)
-					rows, err = db.Query(
-						`INSERT INTO commands ("from", "command", "result", "time") VALUES ($1, $2, $3, $4)`,
-						player.name, player.curCommand, string(log), time.Now().Unix())
+
+					var lastInsertID int
+					err = db.QueryRow(`INSERT INTO commands ("from", "command", "result", "time") VALUES ($1,$2,$3,$4) RETURNING id;`,
+						player.name, player.curCommand, string(log), time.Now().Unix()).Scan(&lastInsertID)
+					/*
+						rows, err = db.Query(
+							`INSERT INTO commands ("from", "command", "result", "time") VALUES ($1, $2, $3, $4)`,
+							player.name, player.curCommand, string(log), time.Now().Unix())*/
 					FatalOnErr(err)
 					rows.Close()
 
