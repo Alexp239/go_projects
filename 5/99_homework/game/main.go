@@ -177,7 +177,7 @@ func main() {
 	err = db.Ping()
 	FatalOnErr(err)
 
-	_, err = db.Query(`CREATE TABLE IF NOT EXISTS commands (
+	rows, err := db.Query(`CREATE TABLE IF NOT EXISTS commands (
 	  "id" serial NOT NULL,
 	  "from" text NOT NULL,
 	  "command" text NOT NULL,
@@ -185,6 +185,7 @@ func main() {
 	  "time" integer NOT NULL
 	);`)
 	FatalOnErr(err)
+	rows.Close()
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
@@ -232,10 +233,11 @@ func main() {
 				for msg := range output {
 					log, err := json.Marshal(&LogJSON{Player: player.name, Message: msg})
 					FatalOnErr(err)
-					_, err = db.Query(
+					rows, err = db.Query(
 						`INSERT INTO commands ("from", "command", "result", "time") VALUES ($1, $2, $3, $4)`,
 						player.name, player.curCommand, string(log), time.Now().Unix())
 					FatalOnErr(err)
+					rows.Close()
 
 					message = tgbotapi.NewMessage(player.chatID, msg)
 					if admins[id] {
