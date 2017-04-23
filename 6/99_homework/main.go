@@ -35,6 +35,13 @@ type SearchResponse struct {
 	NextPage bool
 }
 
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func doSearch(searcherURL string, limit int, offset int, query string, orderField string, orderBy int) (*SearchResponse, error) {
 
 	searcherParams := url.Values{}
@@ -46,24 +53,28 @@ func doSearch(searcherURL string, limit int, offset int, query string, orderFiel
 		limit = 25
 	}
 	if offset < 0 {
-		return nil, fmt.Errorf("limit must be > 0")
+		return nil, fmt.Errorf("offset must be > 0")
 	}
 
 	//нужно для получения следующей записи, на основе которой мы скажем - можно показать переключатель следующей страницы или нет
 	limit++
 
 	searcherParams.Add("limit", strconv.Itoa(limit))
-	searcherParams.Add("ofset", strconv.Itoa(offset))
+	searcherParams.Add("offset", strconv.Itoa(offset))
 	searcherParams.Add("query", query)
 	searcherParams.Add("order_field", orderField)
 	searcherParams.Add("order_by", strconv.Itoa(orderBy))
 
+	limit--
+
 	req, err := http.NewRequest("GET", searcherURL+"?"+searcherParams.Encode(), nil)
+	// Была бы ошибка, если параметры у http.NewRequest указаны неверно
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Do(req)
 	if err != nil {
+		// Была бы ошибка, если SearchServer занят другими запросами ???
 		if err, ok := err.(net.Error); ok && err.Timeout() {
 			return nil, fmt.Errorf("timeout for %s", searcherParams.Encode())
 		}
@@ -76,16 +87,17 @@ func doSearch(searcherURL string, limit int, offset int, query string, orderFiel
 
 	data := []User{}
 	err = json.Unmarshal(body, &data)
+	// Была бы ошибка, если неправильно написан SearchServer
 	if err != nil {
 		return nil, err
 	}
 
-	result.Users = data[0:len(data)]
+	result.Users = data[0:min(len(data), limit)]
 	if len(data) > limit {
 		result.NextPage = true
 	}
 
-	fmt.Printf("%+v", data)
+	// fmt.Printf("%+v\n", data)
 
 	return &result, err
 }
