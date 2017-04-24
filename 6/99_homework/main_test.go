@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 type XMLUser struct {
@@ -224,4 +225,33 @@ func TestSearch(t *testing.T) {
 	if err != nil || res.NextPage != true || !reflect.DeepEqual(getNameFromUsers(res.Users), expectedNames) {
 		t.Errorf("expected \n%+v\n, got \n%+v\n", expected, *res)
 	}
+}
+
+func SearchServerTest(w http.ResponseWriter, r *http.Request) {
+	data, _ := json.Marshal(XMLUser{})
+
+	w.Write(data)
+}
+
+func SearchServerTestTimeout(w http.ResponseWriter, r *http.Request) {
+	time.Sleep(time.Second * 2)
+}
+
+func TestServer(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(SearchServerTest))
+	// expectedErr := errors.New("json: cannot unmarshal object into Go value of type []main.User")
+	res, err := doSearch(ts.URL, 2, 1, "", "Id", 1)
+	expected := json.UnmarshalTypeError{Value: "object", Type: reflect.TypeOf([]User{})}
+	if res != nil || err.Error() != expected.Error() {
+		t.Errorf("expected err:\n%+v\n, got err:\n%+v\n", expected.Error(), err.Error())
+	}
+	ts.Close()
+	ts = httptest.NewServer(http.HandlerFunc(SearchServerTestTimeout))
+	res, err = doSearch(ts.URL, 2, 1, "", "Id", 1)
+	if res != nil {
+		if err, ok := err.(net.Error); !ok || err.Timeout() {
+			t.Errorf("expected err:\n%+v\n, got err:\n%+v\n", expected.Error(), err.Error())
+		}
+	}
+	ts.Close()
 }

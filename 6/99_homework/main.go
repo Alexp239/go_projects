@@ -74,20 +74,18 @@ func doSearch(searcherURL string, limit int, offset int, query string, orderFiel
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		// Была бы ошибка, если SearchServer занят другими запросами ???
 		if err, ok := err.(net.Error); ok && err.Timeout() {
 			return nil, fmt.Errorf("timeout for %s", searcherParams.Encode())
 		}
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
 
 	result := SearchResponse{}
 
 	data := []User{}
 	err = json.Unmarshal(body, &data)
-	// Была бы ошибка, если неправильно написан SearchServer
 	if err != nil {
 		return nil, err
 	}
