@@ -1,9 +1,10 @@
 package main
 
 import (
-	"./user"
 	"database/sql"
 	"fmt"
+
+	"./user"
 	_ "github.com/go-sql-driver/mysql"
 )
 
