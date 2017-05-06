@@ -96,6 +96,20 @@ func GenerateFindByPKFunction(w *os.File, table *Table, structName string, table
 func GenerateUpdateFunction(w *os.File, table *Table, structName string, tableName string) {
 	s := "func (data *" + structName + ") Update() (err error) {\n"
 	WriteStringInFile(w, s)
+
+	for _, column := range table.columns {
+		if column.isNull {
+			s = "\tvar " + column.nameInDB + "_null sql.NullString\n"
+			WriteStringInFile(w, s)
+			s = "\tif len(data." + column.name + ") == 0 {\n"
+			s += "\t\t" + column.nameInDB + "_null = sql.NullString{}\n"
+			s += "\t} else {\n"
+			s += "\t\t" + column.nameInDB + "_null = sql.NullString{\n\t\t\tString: data." + column.name
+			s += ",\n\t\t\tValid:  true,\n\t\t}\n\t}\n"
+			WriteStringInFile(w, s)
+		}
+	}
+
 	WriteStringInFile(w, "\t_, err = DB.Exec(\n")
 
 	s = "\t\t\"UPDATE " + tableName + " SET "
@@ -122,7 +136,11 @@ func GenerateUpdateFunction(w *os.File, table *Table, structName string, tableNa
 		if i != 0 {
 			s += ", "
 		}
-		s += "data." + column.name
+		if column.isNull {
+			s += column.nameInDB + "_null"
+		} else {
+			s += "data." + column.name
+		}
 		i++
 	}
 	s += ", data." + table.pk.name
@@ -134,6 +152,20 @@ func GenerateUpdateFunction(w *os.File, table *Table, structName string, tableNa
 func GenerateCreateFunction(w *os.File, table *Table, structName string, tableName string) {
 	s := "func (data *" + structName + ") Create() (err error) {\n"
 	WriteStringInFile(w, s)
+
+	for _, column := range table.columns {
+		if column.isNull {
+			s = "\tvar " + column.nameInDB + "_null sql.NullString\n"
+			WriteStringInFile(w, s)
+			s = "\tif len(data." + column.name + ") == 0 {\n"
+			s += "\t\t" + column.nameInDB + "_null = sql.NullString{}\n"
+			s += "\t} else {\n"
+			s += "\t\t" + column.nameInDB + "_null = sql.NullString{\n\t\t\tString: data." + column.name
+			s += ",\n\t\t\tValid:  true,\n\t\t}\n\t}\n"
+			WriteStringInFile(w, s)
+		}
+	}
+
 	WriteStringInFile(w, "\tresult, err := DB.Exec(\n")
 	s = "\t\t\"INSERT INTO " + tableName + "("
 	i := 0
@@ -165,7 +197,11 @@ func GenerateCreateFunction(w *os.File, table *Table, structName string, tableNa
 		if table.pk == column {
 			continue
 		}
-		s += "data." + column.name
+		if column.isNull {
+			s += column.nameInDB + "_null"
+		} else {
+			s += "data." + column.name
+		}
 		i++
 	}
 	s += ",\n\t)\n"

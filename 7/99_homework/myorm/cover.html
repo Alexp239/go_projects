@@ -54,7 +54,7 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">msu-go-11/7/99_homework/myorm/codegen/main.go (98.7%)</option>
+				<option value="file0">msu-go-11/7/99_homework/myorm/codegen/main.go (98.9%)</option>
 				
 				</select>
 			</div>
@@ -166,7 +166,21 @@ func GenerateFindByPKFunction(w *os.File, table *Table, structName string, table
 func GenerateUpdateFunction(w *os.File, table *Table, structName string, tableName string) <span class="cov8" title="1">{
         s := "func (data *" + structName + ") Update() (err error) {\n"
         WriteStringInFile(w, s)
-        WriteStringInFile(w, "\t_, err = DB.Exec(\n")
+
+        for _, column := range table.columns </span><span class="cov8" title="1">{
+                if column.isNull </span><span class="cov8" title="1">{
+                        s = "\tvar " + column.nameInDB + "_null sql.NullString\n"
+                        WriteStringInFile(w, s)
+                        s = "\tif len(data." + column.name + ") == 0 {\n"
+                        s += "\t\t" + column.nameInDB + "_null = sql.NullString{}\n"
+                        s += "\t} else {\n"
+                        s += "\t\t" + column.nameInDB + "_null = sql.NullString{\n\t\t\tString: data." + column.name
+                        s += ",\n\t\t\tValid:  true,\n\t\t}\n\t}\n"
+                        WriteStringInFile(w, s)
+                }</span>
+        }
+
+        <span class="cov8" title="1">WriteStringInFile(w, "\t_, err = DB.Exec(\n")
 
         s = "\t\t\"UPDATE " + tableName + " SET "
         i := 0
@@ -192,8 +206,12 @@ func GenerateUpdateFunction(w *os.File, table *Table, structName string, tableNa
                 <span class="cov8" title="1">if i != 0 </span><span class="cov8" title="1">{
                         s += ", "
                 }</span>
-                <span class="cov8" title="1">s += "data." + column.name
-                i++</span>
+                <span class="cov8" title="1">if column.isNull </span><span class="cov8" title="1">{
+                        s += column.nameInDB + "_null"
+                }</span><span class="cov8" title="1"> else {
+                        s += "data." + column.name
+                }</span>
+                <span class="cov8" title="1">i++</span>
         }
         <span class="cov8" title="1">s += ", data." + table.pk.name
         s += ",\n"
@@ -204,7 +222,21 @@ func GenerateUpdateFunction(w *os.File, table *Table, structName string, tableNa
 func GenerateCreateFunction(w *os.File, table *Table, structName string, tableName string) <span class="cov8" title="1">{
         s := "func (data *" + structName + ") Create() (err error) {\n"
         WriteStringInFile(w, s)
-        WriteStringInFile(w, "\tresult, err := DB.Exec(\n")
+
+        for _, column := range table.columns </span><span class="cov8" title="1">{
+                if column.isNull </span><span class="cov8" title="1">{
+                        s = "\tvar " + column.nameInDB + "_null sql.NullString\n"
+                        WriteStringInFile(w, s)
+                        s = "\tif len(data." + column.name + ") == 0 {\n"
+                        s += "\t\t" + column.nameInDB + "_null = sql.NullString{}\n"
+                        s += "\t} else {\n"
+                        s += "\t\t" + column.nameInDB + "_null = sql.NullString{\n\t\t\tString: data." + column.name
+                        s += ",\n\t\t\tValid:  true,\n\t\t}\n\t}\n"
+                        WriteStringInFile(w, s)
+                }</span>
+        }
+
+        <span class="cov8" title="1">WriteStringInFile(w, "\tresult, err := DB.Exec(\n")
         s = "\t\t\"INSERT INTO " + tableName + "("
         i := 0
         for _, column := range table.columns </span><span class="cov8" title="1">{
@@ -235,8 +267,12 @@ func GenerateCreateFunction(w *os.File, table *Table, structName string, tableNa
                 <span class="cov8" title="1">if table.pk == column </span><span class="cov8" title="1">{
                         continue</span>
                 }
-                <span class="cov8" title="1">s += "data." + column.name
-                i++</span>
+                <span class="cov8" title="1">if column.isNull </span><span class="cov8" title="1">{
+                        s += column.nameInDB + "_null"
+                }</span><span class="cov8" title="1"> else {
+                        s += "data." + column.name
+                }</span>
+                <span class="cov8" title="1">i++</span>
         }
         <span class="cov8" title="1">s += ",\n\t)\n"
         WriteStringInFile(w, s)

@@ -23,17 +23,35 @@ func (data *User) FindByPK(pk uint) (err error) {
 }
 
 func (data *User) Update() (err error) {
+	var info_null sql.NullString
+	if len(data.Info) == 0 {
+		info_null = sql.NullString{}
+	} else {
+		info_null = sql.NullString{
+			String: data.Info,
+			Valid:  true,
+		}
+	}
 	_, err = DB.Exec(
 		"UPDATE users SET username = ?, info = ?, balance = ?, status = ? WHERE id = ?",
-		data.Login, data.Info, data.Balance, data.Status, data.ID,
+		data.Login, info_null, data.Balance, data.Status, data.ID,
 	)
 	return err
 }
 
 func (data *User) Create() (err error) {
+	var info_null sql.NullString
+	if len(data.Info) == 0 {
+		info_null = sql.NullString{}
+	} else {
+		info_null = sql.NullString{
+			String: data.Info,
+			Valid:  true,
+		}
+	}
 	result, err := DB.Exec(
 		"INSERT INTO users(`username`, `info`, `balance`, `status`) VALUES (?, ?, ?, ?)",
-		data.Login, data.Info, data.Balance, data.Status,
+		data.Login, info_null, data.Balance, data.Status,
 	)
 	if err != nil {
 		return
