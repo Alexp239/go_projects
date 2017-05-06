@@ -21,9 +21,10 @@ type Table struct {
 }
 
 type Column struct {
-	name     string
-	isNull   bool
-	nameInDB string
+	name      string
+	fieldType string
+	isNull    bool
+	nameInDB  string
 }
 
 func WriteStringInFile(w *os.File, s string) {
@@ -31,9 +32,154 @@ func WriteStringInFile(w *os.File, s string) {
 	PanicOnErr(err)
 }
 
-func main() {
+func GenerateHeaders(w *os.File) {
+	s := "package user\n\n"
+	WriteStringInFile(w, s)
+	WriteStringInFile(w, "// Generated code!\n\n")
+	s = "import \"database/sql\"\n\n"
+	WriteStringInFile(w, s)
+}
+
+func GenerateDBInfoFunction(w *os.File) {
+	WriteStringInFile(w, "var DB *sql.DB\n\n")
+	s := "func SetDB(db *sql.DB) {\n"
+	s += "\tDB = db\n}\n\n"
+	WriteStringInFile(w, s)
+}
+
+func GenerateFindByPKFunction(w *os.File, table *Table, structName string, tableName string) {
+	s := "func (data *" + structName + ") FindByPK(pk " + table.pk.fieldType + ") (err error) {\n"
+	WriteStringInFile(w, s)
+	for _, column := range table.columns {
+		if column.isNull {
+			s = "\tvar " + column.nameInDB + "_null *" + column.fieldType + "\n"
+			WriteStringInFile(w, s)
+		}
+	}
+	s = "\trow := DB.QueryRow(\"SELECT "
+	for i, column := range table.columns {
+		if i != 0 {
+			s += ", "
+		}
+		s += column.nameInDB
+	}
+	s += " FROM " + tableName + " WHERE " + table.pk.nameInDB + "= ?\", pk)\n"
+	WriteStringInFile(w, s)
+
+	s = "\terr = row.Scan("
+	for i, column := range table.columns {
+		if i != 0 {
+			s += ", "
+		}
+		if column.isNull {
+			s += "&" + column.nameInDB + "_null"
+		} else {
+			s += "&data." + column.name
+		}
+	}
+	s += ")\n"
+	WriteStringInFile(w, s)
+
+	for _, column := range table.columns {
+		if column.isNull {
+			s = "\tif " + column.nameInDB + "_null != nil {\n"
+			s += "\t\tdata." + column.name + " = *" + column.nameInDB + "_null\n"
+			s += "\t} else {\n"
+			s += "\t\tdata." + column.name + " = \"\"\n\t}\n"
+			WriteStringInFile(w, s)
+		}
+	}
+
+	WriteStringInFile(w, "\treturn err\n}\n\n")
+}
+
+func GenerateUpdateFunction(w *os.File, table *Table, structName string, tableName string) {
+	s := "func (data *" + structName + ") Update() (err error) {\n"
+	WriteStringInFile(w, s)
+	WriteStringInFile(w, "\t_, err = DB.Exec(\n")
+
+	s = "\t\t\"UPDATE " + tableName + " SET "
+	i := 0
+	for _, column := range table.columns {
+		if table.pk == column {
+			continue
+		}
+		if i != 0 {
+			s += ", "
+		}
+		s += column.nameInDB + " = ?"
+		i++
+	}
+	s += " WHERE " + table.pk.nameInDB + " = ?\",\n"
+	WriteStringInFile(w, s)
+
+	s = "\t\t"
+	i = 0
+	for _, column := range table.columns {
+		if table.pk == column {
+			continue
+		}
+		if i != 0 {
+			s += ", "
+		}
+		s += "data." + column.name
+		i++
+	}
+	s += ", data." + table.pk.name
+	s += ",\n"
+	WriteStringInFile(w, s)
+	WriteStringInFile(w, "\t)\n\treturn err\n}\n\n")
+}
+
+func GenerateCreateFunction(w *os.File, table *Table, structName string, tableName string) {
+	s := "func (data *" + structName + ") Create() (err error) {\n"
+	WriteStringInFile(w, s)
+	WriteStringInFile(w, "\tresult, err := DB.Exec(\n")
+	s = "\t\t\"INSERT INTO " + tableName + "("
+	i := 0
+	for _, column := range table.columns {
+		if i != 0 {
+			s += ", "
+		}
+		if table.pk == column {
+			continue
+		}
+		s += "`" + column.nameInDB + "`"
+		i++
+	}
+	s += ") VALUES ("
+	for i = 0; i < len(table.columns)-1; i++ {
+		if i != 0 {
+			s += ", "
+		}
+		s += "?"
+	}
+	s += ")\",\n"
+	WriteStringInFile(w, s)
+	s = "\t\t"
+	i = 0
+	for _, column := range table.columns {
+		if i != 0 {
+			s += ", "
+		}
+		if table.pk == column {
+			continue
+		}
+		s += "data." + column.name
+		i++
+	}
+	s += ",\n\t)\n"
+	WriteStringInFile(w, s)
+	s = "\tif err != nil {\n\t\treturn\n\t}\n\n"
+	s += "\tlastID, err := result.LastInsertId()\n"
+	s += "\tif err != nil {\n\t\treturn\n\t}\n"
+	s += "\tdata." + table.pk.name + " = " + table.pk.fieldType + "(lastID)\n"
+	s += "\treturn nil\n}\n"
+	WriteStringInFile(w, s)
+}
+
+func GenerateFile(path string) {
 	fset := token.NewFileSet()
-	path := os.Args[1]
 	pathSlice := strings.SplitAfter(path, "/")
 
 	f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
@@ -43,7 +189,11 @@ func main() {
 		if !ok {
 			continue
 		}
-		structDecl, ok := typedecl.Specs[0].(*ast.TypeSpec).Type.(*ast.StructType)
+		typeSpecDecl, ok := typedecl.Specs[0].(*ast.TypeSpec)
+		if !ok {
+			continue
+		}
+		structDecl, ok := typeSpecDecl.Type.(*ast.StructType)
 		if !ok {
 			continue
 		}
@@ -60,29 +210,26 @@ func main() {
 		PanicOnErr(err)
 		defer w.Close()
 
-		s := "package user\n\n"
-		WriteStringInFile(w, s)
-		WriteStringInFile(w, "// Generated code!\n\n")
-		s = "import \"database/sql\"\n\n"
-		WriteStringInFile(w, s)
+		GenerateHeaders(w)
 
 		if decl_iter == 0 {
-			WriteStringInFile(w, "var DB *sql.DB\n\n")
-			s = "func SetDB(db *sql.DB) {\n"
-			s += "\tDB = db\n}\n\n"
-			WriteStringInFile(w, s)
+			GenerateDBInfoFunction(w)
 		}
 
-		table := Table{name: tableName}
+		table := &Table{name: tableName}
 
 		for _, field := range structDecl.Fields.List {
-			column := Column{name: field.Names[0].Name, nameInDB: strings.ToLower(field.Names[0].Name)}
+			column := Column{
+				name:      field.Names[0].Name,
+				nameInDB:  strings.ToLower(field.Names[0].Name),
+				fieldType: field.Type.(*ast.Ident).Name,
+			}
 			ignored := false
 			if field.Tag != nil {
 
 				tagSlice := strings.Split(field.Tag.Value, "`myorm:")
 				if len(tagSlice) != 2 {
-					PanicOnErr(err)
+					continue
 				}
 
 				tags := strings.Split(tagSlice[1][:len(tagSlice[1])-1], ",")
@@ -110,114 +257,14 @@ func main() {
 		}
 
 		// FindByPK generate
-		s = "func (data *" + structName + ") FindByPK(pk uint) (err error) {\n"
-		WriteStringInFile(w, s)
-
-		s = "\trow := DB.QueryRow(\"SELECT "
-		for i, column := range table.columns {
-			if i != 0 {
-				s += ", "
-			}
-			s += column.nameInDB
-		}
-		s += " FROM " + tableName + " WHERE " + table.pk.nameInDB + "= ?\", pk)\n"
-		WriteStringInFile(w, s)
-
-		s = "\terr = row.Scan("
-		for i, column := range table.columns {
-			if i != 0 {
-				s += ", "
-			}
-			s += "&data." + column.name
-		}
-		s += ")\n"
-		WriteStringInFile(w, s)
-
-		WriteStringInFile(w, "\treturn err\n}\n\n")
-
+		GenerateFindByPKFunction(w, table, structName, tableName)
 		// Update generate
-
-		s = "func (data *" + structName + ") Update() (err error) {\n"
-		WriteStringInFile(w, s)
-		WriteStringInFile(w, "\t_, err = DB.Exec(\n")
-
-		s = "\t\t\"UPDATE " + tableName + " SET "
-		i := 0
-		for _, column := range table.columns {
-			if table.pk == column {
-				continue
-			}
-			if i != 0 {
-				s += ", "
-			}
-			s += column.nameInDB + " = ?"
-			i++
-		}
-		s += " WHERE " + table.pk.nameInDB + " = ?\",\n"
-		WriteStringInFile(w, s)
-
-		s = "\t\t"
-		i = 0
-		for _, column := range table.columns {
-			if table.pk == column {
-				continue
-			}
-			if i != 0 {
-				s += ", "
-			}
-			s += "data." + column.name
-			i++
-		}
-		s += ", data." + table.pk.name
-		s += ",\n"
-		WriteStringInFile(w, s)
-		WriteStringInFile(w, "\t)\n\treturn err\n}\n\n")
-
+		GenerateUpdateFunction(w, table, structName, tableName)
 		// Create generate
-
-		s = "func (data *" + structName + ") Create() (err error) {\n"
-		WriteStringInFile(w, s)
-		WriteStringInFile(w, "\tresult, err := DB.Exec(\n")
-		s = "\t\t\"INSERT INTO " + tableName + "("
-		i = 0
-		for _, column := range table.columns {
-			if i != 0 {
-				s += ", "
-			}
-			if table.pk == column {
-				continue
-			}
-			s += "`" + column.nameInDB + "`"
-			i++
-		}
-		s += ") VALUES ("
-		for i = 0; i < len(table.columns)-1; i++ {
-			if i != 0 {
-				s += ", "
-			}
-			s += "?"
-		}
-		s += ")\",\n"
-		WriteStringInFile(w, s)
-		s = "\t\t"
-		i = 0
-		for _, column := range table.columns {
-			if i != 0 {
-				s += ", "
-			}
-			if table.pk == column {
-				continue
-			}
-			s += "data." + column.name
-			i++
-		}
-		s += ",\n\t)\n"
-		WriteStringInFile(w, s)
-		s = "\tif err != nil {\n\t\treturn\n\t}\n\n"
-		s += "\tlastID, err := result.LastInsertId()\n"
-		s += "\tif err != nil {\n\t\treturn\n\t}\n"
-		s += "\tdata." + table.pk.name + " = uint(lastID)\n"
-		s += "\treturn nil\n}\n"
-		WriteStringInFile(w, s)
+		GenerateCreateFunction(w, table, structName, tableName)
 	}
+}
+
+func main() {
+	GenerateFile(os.Args[1])
 }

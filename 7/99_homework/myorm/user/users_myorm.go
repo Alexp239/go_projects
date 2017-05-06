@@ -11,8 +11,14 @@ func SetDB(db *sql.DB) {
 }
 
 func (data *User) FindByPK(pk uint) (err error) {
+	var info_null *string
 	row := DB.QueryRow("SELECT id, username, info, balance, status FROM users WHERE id= ?", pk)
-	err = row.Scan(&data.ID, &data.Login, &data.Info, &data.Balance, &data.Status)
+	err = row.Scan(&data.ID, &data.Login, &info_null, &data.Balance, &data.Status)
+	if info_null != nil {
+		data.Info = *info_null
+	} else {
+		data.Info = ""
+	}
 	return err
 }
 

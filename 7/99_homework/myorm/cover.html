@@ -1,0 +1,372 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">msu-go-11/7/99_homework/myorm/codegen/main.go (98.7%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "go/ast"
+        "go/parser"
+        "go/token"
+        "os"
+        "strings"
+)
+
+func PanicOnErr(err error) <span class="cov8" title="1">{
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+}
+
+type Table struct {
+        name    string
+        columns []*Column
+        pk      *Column
+}
+
+type Column struct {
+        name      string
+        fieldType string
+        isNull    bool
+        nameInDB  string
+}
+
+func WriteStringInFile(w *os.File, s string) <span class="cov8" title="1">{
+        _, err := w.Write([]byte(s))
+        PanicOnErr(err)
+}</span>
+
+func GenerateHeaders(w *os.File) <span class="cov8" title="1">{
+        s := "package user\n\n"
+        WriteStringInFile(w, s)
+        WriteStringInFile(w, "// Generated code!\n\n")
+        s = "import \"database/sql\"\n\n"
+        WriteStringInFile(w, s)
+}</span>
+
+func GenerateDBInfoFunction(w *os.File) <span class="cov8" title="1">{
+        WriteStringInFile(w, "var DB *sql.DB\n\n")
+        s := "func SetDB(db *sql.DB) {\n"
+        s += "\tDB = db\n}\n\n"
+        WriteStringInFile(w, s)
+}</span>
+
+func GenerateFindByPKFunction(w *os.File, table *Table, structName string, tableName string) <span class="cov8" title="1">{
+        s := "func (data *" + structName + ") FindByPK(pk " + table.pk.fieldType + ") (err error) {\n"
+        WriteStringInFile(w, s)
+        for _, column := range table.columns </span><span class="cov8" title="1">{
+                if column.isNull </span><span class="cov8" title="1">{
+                        s = "\tvar " + column.nameInDB + "_null *" + column.fieldType + "\n"
+                        WriteStringInFile(w, s)
+                }</span>
+        }
+        <span class="cov8" title="1">s = "\trow := DB.QueryRow(\"SELECT "
+        for i, column := range table.columns </span><span class="cov8" title="1">{
+                if i != 0 </span><span class="cov8" title="1">{
+                        s += ", "
+                }</span>
+                <span class="cov8" title="1">s += column.nameInDB</span>
+        }
+        <span class="cov8" title="1">s += " FROM " + tableName + " WHERE " + table.pk.nameInDB + "= ?\", pk)\n"
+        WriteStringInFile(w, s)
+
+        s = "\terr = row.Scan("
+        for i, column := range table.columns </span><span class="cov8" title="1">{
+                if i != 0 </span><span class="cov8" title="1">{
+                        s += ", "
+                }</span>
+                <span class="cov8" title="1">if column.isNull </span><span class="cov8" title="1">{
+                        s += "&amp;" + column.nameInDB + "_null"
+                }</span><span class="cov8" title="1"> else {
+                        s += "&amp;data." + column.name
+                }</span>
+        }
+        <span class="cov8" title="1">s += ")\n"
+        WriteStringInFile(w, s)
+
+        for _, column := range table.columns </span><span class="cov8" title="1">{
+                if column.isNull </span><span class="cov8" title="1">{
+                        s = "\tif " + column.nameInDB + "_null != nil {\n"
+                        s += "\t\tdata." + column.name + " = *" + column.nameInDB + "_null\n"
+                        s += "\t} else {\n"
+                        s += "\t\tdata." + column.name + " = \"\"\n\t}\n"
+                        WriteStringInFile(w, s)
+                }</span>
+        }
+
+        <span class="cov8" title="1">WriteStringInFile(w, "\treturn err\n}\n\n")</span>
+}
+
+func GenerateUpdateFunction(w *os.File, table *Table, structName string, tableName string) <span class="cov8" title="1">{
+        s := "func (data *" + structName + ") Update() (err error) {\n"
+        WriteStringInFile(w, s)
+        WriteStringInFile(w, "\t_, err = DB.Exec(\n")
+
+        s = "\t\t\"UPDATE " + tableName + " SET "
+        i := 0
+        for _, column := range table.columns </span><span class="cov8" title="1">{
+                if table.pk == column </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">if i != 0 </span><span class="cov8" title="1">{
+                        s += ", "
+                }</span>
+                <span class="cov8" title="1">s += column.nameInDB + " = ?"
+                i++</span>
+        }
+        <span class="cov8" title="1">s += " WHERE " + table.pk.nameInDB + " = ?\",\n"
+        WriteStringInFile(w, s)
+
+        s = "\t\t"
+        i = 0
+        for _, column := range table.columns </span><span class="cov8" title="1">{
+                if table.pk == column </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">if i != 0 </span><span class="cov8" title="1">{
+                        s += ", "
+                }</span>
+                <span class="cov8" title="1">s += "data." + column.name
+                i++</span>
+        }
+        <span class="cov8" title="1">s += ", data." + table.pk.name
+        s += ",\n"
+        WriteStringInFile(w, s)
+        WriteStringInFile(w, "\t)\n\treturn err\n}\n\n")</span>
+}
+
+func GenerateCreateFunction(w *os.File, table *Table, structName string, tableName string) <span class="cov8" title="1">{
+        s := "func (data *" + structName + ") Create() (err error) {\n"
+        WriteStringInFile(w, s)
+        WriteStringInFile(w, "\tresult, err := DB.Exec(\n")
+        s = "\t\t\"INSERT INTO " + tableName + "("
+        i := 0
+        for _, column := range table.columns </span><span class="cov8" title="1">{
+                if i != 0 </span><span class="cov8" title="1">{
+                        s += ", "
+                }</span>
+                <span class="cov8" title="1">if table.pk == column </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">s += "`" + column.nameInDB + "`"
+                i++</span>
+        }
+        <span class="cov8" title="1">s += ") VALUES ("
+        for i = 0; i &lt; len(table.columns)-1; i++ </span><span class="cov8" title="1">{
+                if i != 0 </span><span class="cov8" title="1">{
+                        s += ", "
+                }</span>
+                <span class="cov8" title="1">s += "?"</span>
+        }
+        <span class="cov8" title="1">s += ")\",\n"
+        WriteStringInFile(w, s)
+        s = "\t\t"
+        i = 0
+        for _, column := range table.columns </span><span class="cov8" title="1">{
+                if i != 0 </span><span class="cov8" title="1">{
+                        s += ", "
+                }</span>
+                <span class="cov8" title="1">if table.pk == column </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">s += "data." + column.name
+                i++</span>
+        }
+        <span class="cov8" title="1">s += ",\n\t)\n"
+        WriteStringInFile(w, s)
+        s = "\tif err != nil {\n\t\treturn\n\t}\n\n"
+        s += "\tlastID, err := result.LastInsertId()\n"
+        s += "\tif err != nil {\n\t\treturn\n\t}\n"
+        s += "\tdata." + table.pk.name + " = " + table.pk.fieldType + "(lastID)\n"
+        s += "\treturn nil\n}\n"
+        WriteStringInFile(w, s)</span>
+}
+
+func GenerateFile(path string) <span class="cov8" title="1">{
+        fset := token.NewFileSet()
+        pathSlice := strings.SplitAfter(path, "/")
+
+        f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+        PanicOnErr(err)
+        for decl_iter, decl := range f.Decls </span><span class="cov8" title="1">{
+                typedecl, ok := decl.(*ast.GenDecl)
+                if !ok </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">typeSpecDecl, ok := typedecl.Specs[0].(*ast.TypeSpec)
+                if !ok </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">structDecl, ok := typeSpecDecl.Type.(*ast.StructType)
+                if !ok </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">structName := typedecl.Specs[0].(*ast.TypeSpec).Name.Name
+
+                comment := strings.Split(typedecl.Doc.Text(), "myorm:")
+                if len(comment) != 2 </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">tableName := comment[1][:len(comment[1])-1]
+
+                outputFile := strings.Join(pathSlice[:len(pathSlice)-1], "") + tableName + "_myorm.go"
+                w, err := os.Create(outputFile)
+                PanicOnErr(err)
+                defer w.Close()
+
+                GenerateHeaders(w)
+
+                if decl_iter == 0 </span><span class="cov8" title="1">{
+                        GenerateDBInfoFunction(w)
+                }</span>
+
+                <span class="cov8" title="1">table := &amp;Table{name: tableName}
+
+                for _, field := range structDecl.Fields.List </span><span class="cov8" title="1">{
+                        column := Column{
+                                name:      field.Names[0].Name,
+                                nameInDB:  strings.ToLower(field.Names[0].Name),
+                                fieldType: field.Type.(*ast.Ident).Name,
+                        }
+                        ignored := false
+                        if field.Tag != nil </span><span class="cov8" title="1">{
+
+                                tagSlice := strings.Split(field.Tag.Value, "`myorm:")
+                                if len(tagSlice) != 2 </span><span class="cov8" title="1">{
+                                        continue</span>
+                                }
+
+                                <span class="cov8" title="1">tags := strings.Split(tagSlice[1][:len(tagSlice[1])-1], ",")
+                                for _, tag := range tags </span><span class="cov8" title="1">{
+                                        switch tag </span>{
+                                        case "\"-\"":<span class="cov8" title="1">
+                                                ignored = true</span>
+                                        case "\"null\"":<span class="cov8" title="1">
+                                                column.isNull = true</span>
+                                        case "\"primary_key\"":<span class="cov8" title="1">
+                                                if !ignored </span><span class="cov8" title="1">{
+                                                        table.pk = &amp;column
+                                                }</span>
+                                        default:<span class="cov8" title="1">
+                                                columnNameSlice := strings.Split(tag, "column:")
+                                                if len(columnNameSlice) == 2 </span><span class="cov8" title="1">{
+                                                        column.nameInDB = columnNameSlice[1][:len(columnNameSlice[1])-1]
+                                                }</span>
+                                        }
+                                }
+                        }
+                        <span class="cov8" title="1">if !ignored </span><span class="cov8" title="1">{
+                                table.columns = append(table.columns, &amp;column)
+                        }</span>
+                }
+
+                // FindByPK generate
+                <span class="cov8" title="1">GenerateFindByPKFunction(w, table, structName, tableName)
+                // Update generate
+                GenerateUpdateFunction(w, table, structName, tableName)
+                // Create generate
+                GenerateCreateFunction(w, table, structName, tableName)</span>
+        }
+}
+
+func main() <span class="cov0" title="0">{
+        GenerateFile(os.Args[1])
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
