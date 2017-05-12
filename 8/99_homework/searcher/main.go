@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"regexp"
 	"strings"
@@ -24,6 +25,8 @@ func main() {
 		uniqueBrowsers := 0
 
 		r := regexp.MustCompile("@")
+		regAndroid := regexp.MustCompile("Android")
+		regMSIE := regexp.MustCompile("MSIE")
 
 		files, _ := ioutil.ReadDir(logsPath)
 
@@ -74,7 +77,7 @@ func main() {
 						log.Println("cant cast browser to string")
 						continue
 					}
-					if ok, err := regexp.MatchString("Android", browser); ok && err == nil {
+					if ok := regAndroid.MatchString(browser); ok {
 						isAndroid = true
 						notSeenBefore := true
 						for _, item := range seenBrowsers {
@@ -96,7 +99,7 @@ func main() {
 						log.Println("cant cast browser to string")
 						continue
 					}
-					if ok, err := regexp.MatchString("MSIE", browser); ok && err == nil {
+					if ok := regMSIE.MatchString(browser); ok {
 						isMSIE = true
 						notSeenBefore := true
 						for _, item := range seenBrowsers {
@@ -122,7 +125,7 @@ func main() {
 			}
 
 			fmt.Fprintln(w, "found users:\n"+foundUsers)
-			fmt.Fprintln(w, "Total unique browsers", uniqueBrowsers, "\n\n")
+			fmt.Fprintln(w, "Total unique browsers", uniqueBrowsers)
 		}
 
 	}))
