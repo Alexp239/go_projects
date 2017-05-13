@@ -25,8 +25,8 @@ func main() {
 		uniqueBrowsers := 0
 
 		r := regexp.MustCompile("@")
-		regAndroid := regexp.MustCompile("Android")
-		regMSIE := regexp.MustCompile("MSIE")
+		// regAndroid := regexp.MustCompile("Android")
+		// regMSIE := regexp.MustCompile("MSIE")
 
 		files, _ := ioutil.ReadDir(logsPath)
 
@@ -77,7 +77,7 @@ func main() {
 						log.Println("cant cast browser to string")
 						continue
 					}
-					if ok := regAndroid.MatchString(browser); ok {
+					if matchAndroid(browser) == len(browser) {
 						isAndroid = true
 						notSeenBefore := true
 						for _, item := range seenBrowsers {
@@ -99,7 +99,7 @@ func main() {
 						log.Println("cant cast browser to string")
 						continue
 					}
-					if ok := regMSIE.MatchString(browser); ok {
+					if matchMSIE(browser) == len(browser) {
 						isMSIE = true
 						notSeenBefore := true
 						for _, item := range seenBrowsers {
