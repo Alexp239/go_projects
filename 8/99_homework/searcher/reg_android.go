@@ -16,8 +16,10 @@ func matchAndroid(s string) (end int) {
 	}
 	i += rlen
 	switch {
-	case r == 65:
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66:
 		goto s2
+	case r == 65:
+		goto s3
 	}
 	return
 s2:
@@ -27,8 +29,10 @@ s2:
 	}
 	i += rlen
 	switch {
-	case r == 110:
+	case r == 65:
 		goto s3
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66:
+		goto s2
 	}
 	return
 s3:
@@ -38,7 +42,11 @@ s3:
 	}
 	i += rlen
 	switch {
-	case r == 100:
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66 && r <= 109 || r >= 111:
+		goto s2
+	case r == 65:
+		goto s3
+	case r == 110:
 		goto s4
 	}
 	return
@@ -49,7 +57,11 @@ s4:
 	}
 	i += rlen
 	switch {
-	case r == 114:
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66 && r <= 99 || r >= 101:
+		goto s2
+	case r == 65:
+		goto s3
+	case r == 100:
 		goto s5
 	}
 	return
@@ -60,7 +72,11 @@ s5:
 	}
 	i += rlen
 	switch {
-	case r == 111:
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66 && r <= 113 || r >= 115:
+		goto s2
+	case r == 65:
+		goto s3
+	case r == 114:
 		goto s6
 	}
 	return
@@ -71,7 +87,11 @@ s6:
 	}
 	i += rlen
 	switch {
-	case r == 105:
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66 && r <= 110 || r >= 112:
+		goto s2
+	case r == 65:
+		goto s3
+	case r == 111:
 		goto s7
 	}
 	return
@@ -82,8 +102,183 @@ s7:
 	}
 	i += rlen
 	switch {
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66 && r <= 104 || r >= 106:
+		goto s2
+	case r == 65:
+		goto s3
+	case r == 105:
+		goto s8
+	}
+	return
+s8:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r == 65:
+		goto s3
 	case r == 100:
 		end = i
+		goto s9
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66 && r <= 99 || r >= 101:
+		goto s2
+	}
+	return
+s9:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66:
+		end = i
+		goto s10
+	case r == 65:
+		end = i
+		goto s11
+	}
+	return
+s10:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66:
+		end = i
+		goto s10
+	case r == 65:
+		end = i
+		goto s11
+	}
+	return
+s11:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r == 65:
+		end = i
+		goto s11
+	case r == 110:
+		end = i
+		goto s12
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66 && r <= 109 || r >= 111:
+		end = i
+		goto s10
+	}
+	return
+s12:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66 && r <= 99 || r >= 101:
+		end = i
+		goto s10
+	case r == 65:
+		end = i
+		goto s11
+	case r == 100:
+		end = i
+		goto s13
+	}
+	return
+s13:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66 && r <= 113 || r >= 115:
+		end = i
+		goto s10
+	case r == 10:
+	case r == 65:
+		end = i
+		goto s11
+	case r == 114:
+		end = i
+		goto s15
+	}
+	return
+s15:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r == 65:
+		end = i
+		goto s11
+	case r == 111:
+		end = i
+		goto s16
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66 && r <= 110 || r >= 112:
+		end = i
+		goto s10
+	case r == 10:
+	}
+	return
+s16:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66 && r <= 104 || r >= 106:
+		end = i
+		goto s10
+	case r == 65:
+		end = i
+		goto s11
+	case r == 105:
+		end = i
+		goto s17
+	}
+	return
+s17:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r == 100:
+		end = i
+		goto s18
+	case r <= 9 || r >= 66 && r <= 99 || r >= 101:
+		end = i
+		goto s10
+	case r == 65:
+		end = i
+		goto s11
+	}
+	return
+s18:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r <= 9 || r >= 11 && r <= 64 || r >= 66:
+		end = i
+		goto s10
+	case r == 65:
+		end = i
+		goto s11
 	}
 	return
 }

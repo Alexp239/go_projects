@@ -1,0 +1,9 @@
+2. Оптимизация преобразования в json - использование easyjson.
+Потому что это круто) и не используется reflect
+
+
+BenchmarkTest0-8   	       1	3435066481 ns/op
+BenchmarkTest1-8   	       2	 703780412 ns/op
+BenchmarkTest2-8   	       3	 591483656 ns/op
+
+pprof001 -> pprof002

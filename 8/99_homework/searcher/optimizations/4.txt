@@ -1,0 +1,10 @@
+4. ioutil.ReadAll -> bufio.scanner
+Чтение не всего файла сразу, а построчно
+
+go test -v *.go -bench=. -benchmem
+
+BenchmarkTest0-8   	       1	3364871839 ns/op	6824950432 B/op	 5678291 allocs/op
+BenchmarkTest1-8   	       2	 662777520 ns/op	199221048 B/op	 1196237 allocs/op
+BenchmarkTest2-8   	       3	 484716669 ns/op	188800360 B/op	  496266 allocs/op
+BenchmarkTest3-8   	       3	 446734275 ns/op	76227373 B/op	  494299 allocs/op
+BenchmarkTest4-8   	       2	 509366999 ns/op	42917696 B/op	  514338 allocs/op

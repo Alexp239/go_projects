@@ -16,8 +16,10 @@ func matchMSIE(s string) (end int) {
 	}
 	i += rlen
 	switch {
-	case r == 77:
+	case r <= 9 || r >= 11 && r <= 76 || r >= 78:
 		goto s2
+	case r == 77:
+		goto s3
 	}
 	return
 s2:
@@ -27,7 +29,9 @@ s2:
 	}
 	i += rlen
 	switch {
-	case r == 83:
+	case r <= 9 || r >= 11 && r <= 76 || r >= 78:
+		goto s2
+	case r == 77:
 		goto s3
 	}
 	return
@@ -38,8 +42,12 @@ s3:
 	}
 	i += rlen
 	switch {
-	case r == 73:
+	case r == 77:
+		goto s3
+	case r == 83:
 		goto s4
+	case r <= 9 || r >= 11 && r <= 76 || r >= 78 && r <= 82 || r >= 84:
+		goto s2
 	}
 	return
 s4:
@@ -49,8 +57,128 @@ s4:
 	}
 	i += rlen
 	switch {
+	case r == 77:
+		goto s3
+	case r <= 9 || r >= 11 && r <= 72 || r >= 74 && r <= 76 || r >= 78:
+		goto s2
+	case r == 73:
+		goto s5
+	}
+	return
+s5:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r <= 9 || r >= 11 && r <= 68 || r >= 70 && r <= 76 || r >= 78:
+		goto s2
 	case r == 69:
 		end = i
+		goto s6
+	case r == 77:
+		goto s3
+	}
+	return
+s6:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r <= 9 || r >= 11 && r <= 76 || r >= 78:
+		end = i
+		goto s7
+	case r == 77:
+		end = i
+		goto s8
+	}
+	return
+s7:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r == 77:
+		end = i
+		goto s8
+	case r <= 9 || r >= 11 && r <= 76 || r >= 78:
+		end = i
+		goto s7
+	}
+	return
+s8:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r == 83:
+		end = i
+		goto s9
+	case r <= 9 || r >= 11 && r <= 76 || r >= 78 && r <= 82 || r >= 84:
+		end = i
+		goto s7
+	case r == 77:
+		end = i
+		goto s8
+	}
+	return
+s9:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r <= 9 || r >= 11 && r <= 72 || r >= 74 && r <= 76 || r >= 78:
+		end = i
+		goto s7
+	case r == 10:
+	case r == 73:
+		end = i
+		goto s11
+	case r == 77:
+		end = i
+		goto s8
+	}
+	return
+s11:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r == 77:
+		end = i
+		goto s8
+	case r <= 9 || r >= 70 && r <= 76 || r >= 78:
+		end = i
+		goto s7
+	case r == 69:
+		end = i
+		goto s12
+	}
+	return
+s12:
+	r, rlen = utf8.DecodeRuneInString(s[i:])
+	if rlen == 0 {
+		return
+	}
+	i += rlen
+	switch {
+	case r <= 9 || r >= 11 && r <= 76 || r >= 78:
+		end = i
+		goto s7
+	case r == 77:
+		end = i
+		goto s8
 	}
 	return
 }

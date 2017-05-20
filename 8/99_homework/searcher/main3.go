@@ -2,7 +2,6 @@ package main
 
 import (
 	// "encoding/json"
-	"bufio"
 	"fmt"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	"io/ioutil"
@@ -12,58 +11,25 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"regexp"
-	// "strings"
+	"strings"
 )
 
-const logsPath = "./data/"
-
-func main() {
-	http.Handle("/", http.HandlerFunc(handleFunc))
-	err := http.ListenAndServe(":8081", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe:", err)
-	}
-}
-
-func handleFunc(w http.ResponseWriter, req *http.Request) {
-
-	if req.URL.String() == "/favicon.ico" {
-		return
-	}
-
-	seenBrowsers := []string{}
-	uniqueBrowsers := 0
-
-	r := regexp.MustCompile("@")
-
-	files, _ := ioutil.ReadDir(logsPath)
-
-	for _, f := range files {
-		fmt.Fprintln(w, f.Name())
-		filePath := logsPath + f.Name()
-		SearchFile(filePath, w, &seenBrowsers, &uniqueBrowsers, r)
-	}
-
-}
-
-func SearchFile(filePath string, w http.ResponseWriter, seenBrowsers *[]string, uniqueBrowsers *int, r *regexp.Regexp) {
+func SearchFile3(filePath string, w http.ResponseWriter, seenBrowsers *[]string, uniqueBrowsers *int, r *regexp.Regexp) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		panic(err)
 	}
 
-	scanner := bufio.NewScanner(file)
-	// fileContents, err := ioutil.ReadAll(file)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	fileContents, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// lines := strings.Split(string(fileContents), "\n")
+	lines := strings.Split(string(fileContents), "\n")
 
 	fmt.Fprintln(w, "found users:\n")
 	i := 0
-	for scanner.Scan() {
-		line := scanner.Text()
+	for _, line := range lines {
 		user := structs.User{}
 		// err := json.Unmarshal([]byte(line), &user)
 		user.UnmarshalEasyJSON(&jlexer.Lexer{Data: []byte(line)})
@@ -71,14 +37,14 @@ func SearchFile(filePath string, w http.ResponseWriter, seenBrowsers *[]string, 
 			// fmt.Println("cant unmarshal json: ", f.Name(), line, err)
 			continue
 		}
-		parseUser(user, seenBrowsers, uniqueBrowsers, r, i, w)
+		parseUser3(user, seenBrowsers, uniqueBrowsers, r, i, w)
 		i++
 	}
 
 	fmt.Fprintln(w, "Total unique browsers", *uniqueBrowsers)
 }
 
-func parseUser(user structs.User, seenBrowsers *[]string, uniqueBrowsers *int, r *regexp.Regexp, i int, w http.ResponseWriter) {
+func parseUser3(user structs.User, seenBrowsers *[]string, uniqueBrowsers *int, r *regexp.Regexp, i int, w http.ResponseWriter) {
 	isAndroid := false
 	isMSIE := false
 
