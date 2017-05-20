@@ -1,0 +1,11 @@
+8. регулярки -> strings.Contains
+
+BenchmarkTest0-8   	       1	3389352778 ns/op	6824950312 B/op	 5678235 allocs/op
+BenchmarkTest1-8   	       2	 725785122 ns/op	199221160 B/op	 1196237 allocs/op
+BenchmarkTest2-8   	       2	 567124580 ns/op	188799500 B/op	  496258 allocs/op
+BenchmarkTest3-8   	       3	 502975447 ns/op	76226872 B/op	  494293 allocs/op
+BenchmarkTest4-8   	       3	 515774722 ns/op	42917813 B/op	  514339 allocs/op
+BenchmarkTest5-8   	       5	 402674296 ns/op	19193620 B/op	  474283 allocs/op
+BenchmarkTest6-8   	       3	 352949320 ns/op	12180549 B/op	  216182 allocs/op
+BenchmarkTest7-8   	       5	 367907920 ns/op	12223011 B/op	  216222 allocs/op
+BenchmarkTest8-8   	      10	 112206248 ns/op	11559116 B/op	  200043 allocs/op

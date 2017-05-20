@@ -6,10 +6,8 @@ import (
 	"fmt"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	"msu-go-11/8/99_homework/searcher/structs"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"regexp"
 	// "strings"
 )
 
