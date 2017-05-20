@@ -5,8 +5,6 @@ import (
 	"bufio"
 	"fmt"
 	jlexer "github.com/mailru/easyjson/jlexer"
-	"io/ioutil"
-	"log"
 	"msu-go-11/8/99_homework/searcher/structs"
 	"net/http"
 	_ "net/http/pprof"
@@ -15,52 +13,7 @@ import (
 	// "strings"
 )
 
-const logsPath = "./data/"
-
-type FileInfo struct {
-	filePath       string
-	w              http.ResponseWriter
-	seenBrowsers   map[string]bool
-	uniqueBrowsers int
-	r              *regexp.Regexp
-}
-
-func main() {
-	http.Handle("/", http.HandlerFunc(handleFunc))
-	err := http.ListenAndServe(":8081", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe:", err)
-	}
-}
-
-func handleFunc(w http.ResponseWriter, req *http.Request) {
-
-	if req.URL.String() == "/favicon.ico" {
-		return
-	}
-
-	seenBrowsers := map[string]bool{}
-	uniqueBrowsers := 0
-
-	r := regexp.MustCompile("@")
-
-	files, _ := ioutil.ReadDir(logsPath)
-
-	for _, f := range files {
-		fmt.Fprintln(w, f.Name())
-		filePath := logsPath + f.Name()
-		SearchFile(&FileInfo{
-			seenBrowsers:   seenBrowsers,
-			filePath:       filePath,
-			w:              w,
-			r:              r,
-			uniqueBrowsers: uniqueBrowsers,
-		})
-	}
-
-}
-
-func SearchFile(fileInf *FileInfo) {
+func SearchFile7(fileInf *FileInfo) {
 	file, err := os.Open(fileInf.filePath)
 	if err != nil {
 		panic(err)
@@ -77,14 +30,14 @@ func SearchFile(fileInf *FileInfo) {
 			// fmt.Println("cant unmarshal json: ", f.Name(), line, err)
 			continue
 		}
-		parseUser(user, fileInf, i)
+		parseUser7(user, fileInf, i)
 		i++
 	}
 
 	fmt.Fprintln(fileInf.w, "Total unique browsers", fileInf.uniqueBrowsers)
 }
 
-func parseUser(user structs.User1, fileInf *FileInfo, i int) {
+func parseUser7(user structs.User1, fileInf *FileInfo, i int) {
 	isAndroid := false
 	isMSIE := false
 

@@ -1,0 +1,11 @@
+7. seenBrowsers []string -> map[string]bool{}
+Поиск быстрее
+
+BenchmarkTest0-8   	       1	3271325960 ns/op	6824942928 B/op	 5678231 allocs/op
+BenchmarkTest1-8   	       2	 836985584 ns/op	199221824 B/op	 1196234 allocs/op
+BenchmarkTest2-8   	       3	 492319360 ns/op	188799162 B/op	  496256 allocs/op
+BenchmarkTest3-8   	       3	 455700999 ns/op	76227117 B/op	  494296 allocs/op
+BenchmarkTest4-8   	       2	 538181760 ns/op	42918056 B/op	  514342 allocs/op
+BenchmarkTest5-8   	       3	 468048650 ns/op	19194368 B/op	  474292 allocs/op
+BenchmarkTest6-8   	       3	 371120476 ns/op	12180565 B/op	  216182 allocs/op
+BenchmarkTest7-8   	       3	 345291448 ns/op	12222458 B/op	  216221 allocs/op
