@@ -17,7 +17,146 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson9e1087fdDecodeMsuGo11899HomeworkSearcherStructs(in *jlexer.Lexer, out *User) {
+func easyjson9e1087fdDecodeMsuGo11899HomeworkSearcherStructs(in *jlexer.Lexer, out *User1) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "browsers":
+			if in.IsNull() {
+				in.Skip()
+				out.Browsers = nil
+			} else {
+				in.Delim('[')
+				if out.Browsers == nil {
+					if !in.IsDelim(']') {
+						out.Browsers = make([]string, 0, 4)
+					} else {
+						out.Browsers = []string{}
+					}
+				} else {
+					out.Browsers = (out.Browsers)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v1 string
+					v1 = string(in.String())
+					out.Browsers = append(out.Browsers, v1)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "company":
+			out.Company = string(in.String())
+		case "country":
+			out.Country = string(in.String())
+		case "email":
+			out.Email = string(in.String())
+		case "job":
+			out.Job = string(in.String())
+		case "name":
+			out.Name = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson9e1087fdEncodeMsuGo11899HomeworkSearcherStructs(out *jwriter.Writer, in User1) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if !first {
+		out.RawByte(',')
+	}
+	first = false
+	out.RawString("\"browsers\":")
+	if in.Browsers == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		out.RawString("null")
+	} else {
+		out.RawByte('[')
+		for v2, v3 := range in.Browsers {
+			if v2 > 0 {
+				out.RawByte(',')
+			}
+			out.String(string(v3))
+		}
+		out.RawByte(']')
+	}
+	if !first {
+		out.RawByte(',')
+	}
+	first = false
+	out.RawString("\"company\":")
+	out.String(string(in.Company))
+	if !first {
+		out.RawByte(',')
+	}
+	first = false
+	out.RawString("\"country\":")
+	out.String(string(in.Country))
+	if !first {
+		out.RawByte(',')
+	}
+	first = false
+	out.RawString("\"email\":")
+	out.String(string(in.Email))
+	if !first {
+		out.RawByte(',')
+	}
+	first = false
+	out.RawString("\"job\":")
+	out.String(string(in.Job))
+	if !first {
+		out.RawByte(',')
+	}
+	first = false
+	out.RawString("\"name\":")
+	out.String(string(in.Name))
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v User1) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson9e1087fdEncodeMsuGo11899HomeworkSearcherStructs(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v User1) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson9e1087fdEncodeMsuGo11899HomeworkSearcherStructs(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *User1) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson9e1087fdDecodeMsuGo11899HomeworkSearcherStructs(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *User1) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson9e1087fdDecodeMsuGo11899HomeworkSearcherStructs(l, v)
+}
+func easyjson9e1087fdDecodeMsuGo11899HomeworkSearcherStructs1(in *jlexer.Lexer, out *User) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -94,7 +233,7 @@ func easyjson9e1087fdDecodeMsuGo11899HomeworkSearcherStructs(in *jlexer.Lexer, o
 		in.Consumed()
 	}
 }
-func easyjson9e1087fdEncodeMsuGo11899HomeworkSearcherStructs(out *jwriter.Writer, in User) {
+func easyjson9e1087fdEncodeMsuGo11899HomeworkSearcherStructs1(out *jwriter.Writer, in User) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -176,23 +315,23 @@ func easyjson9e1087fdEncodeMsuGo11899HomeworkSearcherStructs(out *jwriter.Writer
 // MarshalJSON supports json.Marshaler interface
 func (v User) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson9e1087fdEncodeMsuGo11899HomeworkSearcherStructs(&w, v)
+	easyjson9e1087fdEncodeMsuGo11899HomeworkSearcherStructs1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v User) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson9e1087fdEncodeMsuGo11899HomeworkSearcherStructs(w, v)
+	easyjson9e1087fdEncodeMsuGo11899HomeworkSearcherStructs1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *User) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson9e1087fdDecodeMsuGo11899HomeworkSearcherStructs(&r, v)
+	easyjson9e1087fdDecodeMsuGo11899HomeworkSearcherStructs1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *User) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson9e1087fdDecodeMsuGo11899HomeworkSearcherStructs(l, v)
+	easyjson9e1087fdDecodeMsuGo11899HomeworkSearcherStructs1(l, v)
 }

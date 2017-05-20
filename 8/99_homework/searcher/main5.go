@@ -5,8 +5,6 @@ import (
 	"bufio"
 	"fmt"
 	jlexer "github.com/mailru/easyjson/jlexer"
-	"io/ioutil"
-	"log"
 	"msu-go-11/8/99_homework/searcher/structs"
 	"net/http"
 	_ "net/http/pprof"
@@ -15,38 +13,7 @@ import (
 	// "strings"
 )
 
-const logsPath = "./data/"
-
-func main() {
-	http.Handle("/", http.HandlerFunc(handleFunc))
-	err := http.ListenAndServe(":8081", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe:", err)
-	}
-}
-
-func handleFunc(w http.ResponseWriter, req *http.Request) {
-
-	if req.URL.String() == "/favicon.ico" {
-		return
-	}
-
-	seenBrowsers := []string{}
-	uniqueBrowsers := 0
-
-	r := regexp.MustCompile("@")
-
-	files, _ := ioutil.ReadDir(logsPath)
-
-	for _, f := range files {
-		fmt.Fprintln(w, f.Name())
-		filePath := logsPath + f.Name()
-		SearchFile(filePath, w, &seenBrowsers, &uniqueBrowsers, r)
-	}
-
-}
-
-func SearchFile(filePath string, w http.ResponseWriter, seenBrowsers *[]string, uniqueBrowsers *int, r *regexp.Regexp) {
+func SearchFile5(filePath string, w http.ResponseWriter, seenBrowsers *[]string, uniqueBrowsers *int, r *regexp.Regexp) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		panic(err)
@@ -57,27 +24,35 @@ func SearchFile(filePath string, w http.ResponseWriter, seenBrowsers *[]string, 
 	fmt.Fprintln(w, "found users:\n")
 	i := 0
 	for scanner.Scan() {
-		user := structs.User1{}
+		user := structs.User{}
 		user.UnmarshalEasyJSON(&jlexer.Lexer{Data: scanner.Bytes()})
 		if err != nil {
 			// fmt.Println("cant unmarshal json: ", f.Name(), line, err)
 			continue
 		}
-		parseUser(user, seenBrowsers, uniqueBrowsers, r, i, w)
+		parseUser5(user, seenBrowsers, uniqueBrowsers, r, i, w)
 		i++
 	}
 
 	fmt.Fprintln(w, "Total unique browsers", *uniqueBrowsers)
 }
 
-func parseUser(user structs.User1, seenBrowsers *[]string, uniqueBrowsers *int, r *regexp.Regexp, i int, w http.ResponseWriter) {
+func parseUser5(user structs.User, seenBrowsers *[]string, uniqueBrowsers *int, r *regexp.Regexp, i int, w http.ResponseWriter) {
 	isAndroid := false
 	isMSIE := false
 
-	browsers := user.Browsers
+	browsers, ok := user.Browsers.([]interface{})
+	if !ok {
+		// log.Println("cant cast browsers")
+		return
+	}
 
 	for _, browserRaw := range browsers {
-		browser := browserRaw
+		browser, ok := browserRaw.(string)
+		if !ok {
+			// log.Println("cant cast browser to string")
+			continue
+		}
 
 		if matchAndroid(browser) != -1 {
 			isAndroid = true
@@ -88,7 +63,7 @@ func parseUser(user structs.User1, seenBrowsers *[]string, uniqueBrowsers *int, 
 				}
 			}
 			if notSeenBefore {
-				// log.Printf("New browser: %s, first seen: %s", browser, user.Name)
+				// log.Printf("New browser: %s, first seen: %s", browser, user["name"])
 				*seenBrowsers = append(*seenBrowsers, browser)
 				*uniqueBrowsers++
 			}
@@ -96,8 +71,11 @@ func parseUser(user structs.User1, seenBrowsers *[]string, uniqueBrowsers *int, 
 	}
 
 	for _, browserRaw := range browsers {
-		browser := browserRaw
-
+		browser, ok := browserRaw.(string)
+		if !ok {
+			// log.Println("cant cast browser to string")
+			continue
+		}
 		if matchMSIE(browser) != -1 {
 			isMSIE = true
 			notSeenBefore := true
@@ -107,7 +85,7 @@ func parseUser(user structs.User1, seenBrowsers *[]string, uniqueBrowsers *int, 
 				}
 			}
 			if notSeenBefore {
-				// log.Printf("New browser: %s, first seen: %s", browser, user.Name)
+				// log.Printf("New browser: %s, first seen: %s", browser, user["name"])
 				*seenBrowsers = append(*seenBrowsers, browser)
 				*uniqueBrowsers++
 			}
@@ -118,7 +96,7 @@ func parseUser(user structs.User1, seenBrowsers *[]string, uniqueBrowsers *int, 
 		return
 	}
 
-	// log.Println("Android and MSIE user:", user.Name, user.Email)
-	email := r.ReplaceAllString(user.Email, " [at] ")
+	// log.Println("Android and MSIE user:", user["name"], user["email"])
+	email := r.ReplaceAllString(user.Email.(string), " [at] ")
 	fmt.Fprintln(w, "[%d] %s <%s>\n", i, user.Name, email)
 }

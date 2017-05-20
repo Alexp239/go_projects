@@ -62,3 +62,25 @@ func BenchmarkTest4(b *testing.B) {
 		SearchFile4(filePath, w, &seenBrowsers, &uniqueBrowsers, r)
 	}
 }
+
+func BenchmarkTest5(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		filePath := "data/logs0.txt"
+		seenBrowsers := []string{}
+		uniqueBrowsers := 0
+		w := httptest.NewRecorder()
+		r := regexp.MustCompile("@")
+		SearchFile5(filePath, w, &seenBrowsers, &uniqueBrowsers, r)
+	}
+}
+
+func BenchmarkTest6(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		filePath := "data/logs0.txt"
+		seenBrowsers := []string{}
+		uniqueBrowsers := 0
+		w := httptest.NewRecorder()
+		r := regexp.MustCompile("@")
+		SearchFile6(filePath, w, &seenBrowsers, &uniqueBrowsers, r)
+	}
+}

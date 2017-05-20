@@ -1,6 +1,9 @@
-BenchmarkTest0-8   	       1	3364871839 ns/op	6824950432 B/op	 5678291 allocs/op
-BenchmarkTest1-8   	       2	 662777520 ns/op	199221048 B/op	 1196237 allocs/op
-BenchmarkTest2-8   	       3	 484716669 ns/op	188800360 B/op	  496266 allocs/op
-BenchmarkTest3-8   	       3	 446734275 ns/op	76227373 B/op	  494299 allocs/op
-BenchmarkTest4-8   	       2	 509366999 ns/op	42917696 B/op	  514338 allocs/op
-BenchmarkTest5-8   	       3	 447680305 ns/op	42799445 B/op	  509702 allocs/op
+5. []byte(scanner.Text()) -> scanner.Bytes()
+Избавление от ненужного преобразования
+
+BenchmarkTest0-8   	       1	3271540384 ns/op	6824941680 B/op	 5678249 allocs/op
+BenchmarkTest1-8   	       2	 688591169 ns/op	199221336 B/op	 1196239 allocs/op
+BenchmarkTest2-8   	       3	 409931298 ns/op	188801466 B/op	  496263 allocs/op
+BenchmarkTest3-8   	       3	 380355397 ns/op	76227378 B/op	  494300 allocs/op
+BenchmarkTest4-8   	       3	 517408942 ns/op	42918293 B/op	  514345 allocs/op
+BenchmarkTest5-8   	       5	 392028750 ns/op	19193793 B/op	  474285 allocs/op

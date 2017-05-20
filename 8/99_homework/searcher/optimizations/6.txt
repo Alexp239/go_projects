@@ -1,0 +1,10 @@
+6. В структуре User: interface{} -> string
+Избавление от ненужного преобразования
+
+BenchmarkTest0-8   	       1	3229240802 ns/op	6824934016 B/op	 5678272 allocs/op
+BenchmarkTest1-8   	       2	 693641613 ns/op	199221192 B/op	 1196237 allocs/op
+BenchmarkTest2-8   	       3	 520351404 ns/op	188799434 B/op	  496261 allocs/op
+BenchmarkTest3-8   	       3	 490141300 ns/op	76228130 B/op	  494301 allocs/op
+BenchmarkTest4-8   	       3	 492673781 ns/op	42918213 B/op	  514345 allocs/op
+BenchmarkTest5-8   	       3	 445801938 ns/op	19193621 B/op	  474283 allocs/op
+BenchmarkTest6-8   	       5	 334750969 ns/op	12180420 B/op	  216181 allocs/op
